@@ -1,6 +1,6 @@
 /*
    -------------------------------------------------------------------------------------
-   HX711_ADC
+   LoadCell
    Arduino library for HX711 24-Bit Analog-to-Digital Converter for Weight Scales
    Olav Kallhovd sept2017
    -------------------------------------------------------------------------------------
@@ -8,15 +8,30 @@
 
 #include <Arduino.h>
 #include "HX711_ADC.h"
+using namespace std;
+
+LoadCell::LoadCell(uint8_t dout, uint8_t sck) //constructor
+{
+    this -> doutPin = dout;
+	this -> sckPin = sck;
+}
+LoadCell::LoadCell() {
+    this -> doutPin = 26;
+    this -> sckPin = 27;
+}
+
+LoadCell::LoadCell(const LoadCell &drob){
+    this->sckPin = drob.sckPin;
+    this->doutPin = drob.doutPin;
+}
+
+void LoadCell::setPins(uint8_t dout, uint8_t sck){
+    this->doutPin = dout;
+    this->sckPin = sck;
+}
 
 
-HX711_ADC::HX711_ADC(uint8_t dout, uint8_t sck) //constructor
-{ 	
-	doutPin = dout;
-	sckPin = sck;
-} 
-
-void HX711_ADC::setGain(uint8_t gain)  //value should be 32, 64 or 128*
+void LoadCell::setGain(uint8_t gain)  //value should be 32, 64 or 128*
 {
 	if(gain < 64) GAIN = 2; //32, channel B
 	else if(gain < 128) GAIN = 3; //64, channel A
@@ -24,7 +39,7 @@ void HX711_ADC::setGain(uint8_t gain)  //value should be 32, 64 or 128*
 }
 
 //set pinMode, HX711 gain and power up the HX711
-void HX711_ADC::begin()
+void LoadCell::begin()
 {
 	pinMode(sckPin, OUTPUT);
 	pinMode(doutPin, INPUT);
@@ -33,7 +48,7 @@ void HX711_ADC::begin()
 }
 
 //set pinMode, HX711 selected gain and power up the HX711
-void HX711_ADC::begin(uint8_t gain)
+void LoadCell::begin(uint8_t gain)
 {
 	pinMode(sckPin, OUTPUT);
 	pinMode(doutPin, INPUT);
@@ -44,7 +59,7 @@ void HX711_ADC::begin(uint8_t gain)
 /*  start(t): 
 *	will do conversions continuously for 't' +400 milliseconds (400ms is min. settling time at 10SPS). 
 *   Running this for 1-5s in setup() - before tare() seems to improve the tare accuracy */
-void HX711_ADC::start(unsigned long t)
+void LoadCell::start(unsigned long t)
 {
 	t += 400;
 	lastDoutLowTime = millis();
@@ -60,7 +75,7 @@ void HX711_ADC::start(unsigned long t)
 /*  start(t, dotare) with selectable tare:
 *	will do conversions continuously for 't' +400 milliseconds (400ms is min. settling time at 10SPS). 
 *   Running this for 1-5s in setup() - before tare() seems to improve the tare accuracy. */
-void HX711_ADC::start(unsigned long t, bool dotare)
+void LoadCell::start(unsigned long t, bool dotare)
 {
 	t += 400;
 	lastDoutLowTime = millis();
@@ -79,7 +94,7 @@ void HX711_ADC::start(unsigned long t, bool dotare)
 /*  startMultiple(t): use this if you have more than one load cell and you want to do tare and stabilization simultaneously.
 *	Will do conversions continuously for 't' +400 milliseconds (400ms is min. settling time at 10SPS). 
 *   Running this for 1-5s in setup() - before tare() seems to improve the tare accuracy */
-int HX711_ADC::startMultiple(unsigned long t)
+int LoadCell::startMultiple(unsigned long t)
 {
 	tareTimeoutFlag = 0;
 	lastDoutLowTime = millis();
@@ -128,7 +143,7 @@ int HX711_ADC::startMultiple(unsigned long t)
 *	use this if you have more than one load cell and you want to (do tare and) stabilization simultaneously.
 *	Will do conversions continuously for 't' +400 milliseconds (400ms is min. settling time at 10SPS). 
 *   Running this for 1-5s in setup() - before tare() seems to improve the tare accuracy */
-int HX711_ADC::startMultiple(unsigned long t, bool dotare)
+int LoadCell::startMultiple(unsigned long t, bool dotare)
 {
 	tareTimeoutFlag = 0;
 	lastDoutLowTime = millis();
@@ -178,7 +193,7 @@ int HX711_ADC::startMultiple(unsigned long t, bool dotare)
 }
 
 //zero the scale, wait for tare to finnish (blocking)
-void HX711_ADC::tare() 
+void LoadCell::tare()
 {
 	uint8_t rdy = 0;
 	doTare = 1;
@@ -201,7 +216,7 @@ void HX711_ADC::tare()
 }
 
 //zero the scale, initiate the tare operation to run in the background (non-blocking)
-void HX711_ADC::tareNoDelay() 
+void LoadCell::tareNoDelay()
 {
 	doTare = 1;
 	tareTimes = 0;
@@ -209,14 +224,14 @@ void HX711_ADC::tareNoDelay()
 }
 
 //set new calibration factor, raw data is divided by this value to convert to readable data
-void HX711_ADC::setCalFactor(float cal) 
+void LoadCell::setCalFactor(float cal)
 {
 	calFactor = cal;
 	calFactorRecip = 1/calFactor;
 }
 
 //returns 'true' if tareNoDelay() operation is complete
-bool HX711_ADC::getTareStatus() 
+bool LoadCell::getTareStatus()
 {
 	bool t = tareStatus;
 	tareStatus = 0;
@@ -224,7 +239,7 @@ bool HX711_ADC::getTareStatus()
 }
 
 //returns the current calibration factor
-float HX711_ADC::getCalFactor() 
+float LoadCell::getCalFactor()
 {
 	return calFactor;
 }
@@ -233,7 +248,7 @@ float HX711_ADC::getCalFactor()
 //if conversion is ready; read out 24 bit data and add to dataset, returns 1
 //if tare operation is complete, returns 2
 //else returns 0
-uint8_t HX711_ADC::update() 
+uint8_t LoadCell::update()
 {
 	byte dout = digitalRead(doutPin); //check if conversion is ready
 	if (!dout) 
@@ -257,7 +272,7 @@ uint8_t HX711_ADC::update()
 // call the function dataWaitingAsync() in loop or from ISR to check if new data is available to read
 // if conversion is ready, just call updateAsync() to read out 24 bit data and add to dataset
 // returns 1 if data available , else 0
-bool HX711_ADC::dataWaitingAsync() 
+bool LoadCell::dataWaitingAsync()
 {
 	if (dataWaiting) { lastDoutLowTime = millis(); return 1; }
 	byte dout = digitalRead(doutPin); //check if conversion is ready
@@ -282,7 +297,7 @@ bool HX711_ADC::dataWaitingAsync()
 
 // if data is available call updateAsync() to convert it and add it to the dataset.
 // call getData() to get latest value
-bool HX711_ADC::updateAsync() 
+bool LoadCell::updateAsync()
 {
 	if (dataWaiting) { 
 		conversion24bit();
@@ -293,7 +308,7 @@ bool HX711_ADC::updateAsync()
 
 }
 
-float HX711_ADC::getData() // return fresh data from the moving average dataset
+float LoadCell::getData() // return fresh data from the moving average dataset
 {
 	long data = 0;
 	lastSmoothedData = smoothedData();
@@ -302,7 +317,7 @@ float HX711_ADC::getData() // return fresh data from the moving average dataset
 	return x;
 }
 
-long HX711_ADC::smoothedData() 
+long LoadCell::smoothedData()
 {
 	long data = 0;
 	long L = 0xFFFFFF;
@@ -328,7 +343,7 @@ long HX711_ADC::smoothedData()
 
 }
 
-void HX711_ADC::conversion24bit()  //read 24 bit data, store in dataset and start the next conversion
+void LoadCell::conversion24bit()  //read 24 bit data, store in dataset and start the next conversion
 {
 	conversionTime = micros() - conversionStartTime;
 	conversionStartTime = micros();
@@ -398,40 +413,40 @@ void HX711_ADC::conversion24bit()  //read 24 bit data, store in dataset and star
 }
 
 //power down the HX711
-void HX711_ADC::powerDown() 
+void LoadCell::powerDown()
 {
 	digitalWrite(sckPin, LOW);
 	digitalWrite(sckPin, HIGH);
 }
 
 //power up the HX711
-void HX711_ADC::powerUp() 
+void LoadCell::powerUp()
 {
 	digitalWrite(sckPin, LOW);
 }
 
 //get the tare offset (raw data value output without the scale "calFactor")
-long HX711_ADC::getTareOffset() 
+long LoadCell::getTareOffset()
 {
 	return tareOffset;
 }
 
 //set new tare offset (raw data value input without the scale "calFactor")
-void HX711_ADC::setTareOffset(long newoffset)
+void LoadCell::setTareOffset(long newoffset)
 {
 	tareOffset = newoffset;
 }
 
 //for testing and debugging:
 //returns current value of dataset readIndex
-int HX711_ADC::getReadIndex()
+int LoadCell::getReadIndex()
 {
 	return readIndex;
 }
 
 //for testing and debugging:
 //returns latest conversion time in millis
-float HX711_ADC::getConversionTime()
+float LoadCell::getConversionTime()
 {
 	return conversionTime/1000.0;
 }
@@ -439,7 +454,7 @@ float HX711_ADC::getConversionTime()
 //for testing and debugging:
 //returns the HX711 conversions ea seconds based on the latest conversion time. 
 //The HX711 can be set to 10SPS or 80SPS. For general use the recommended setting is 10SPS.
-float HX711_ADC::getSPS()
+float LoadCell::getSPS()
 {
 	float sps = 1000000.0/conversionTime;
 	return sps;
@@ -448,17 +463,17 @@ float HX711_ADC::getSPS()
 //for testing and debugging:
 //returns the tare timeout flag from the last tare operation. 
 //0 = no timeout, 1 = timeout
-bool HX711_ADC::getTareTimeoutFlag() 
+bool LoadCell::getTareTimeoutFlag()
 {
 	return tareTimeoutFlag;
 }
 
-void HX711_ADC::disableTareTimeout()
+void LoadCell::disableTareTimeout()
 {
 	tareTimeoutDisable = 1;
 }
 
-long HX711_ADC::getSettlingTime() 
+long LoadCell::getSettlingTime()
 {
 	long st = getConversionTime() * DATA_SET;
 	return st;
@@ -466,7 +481,7 @@ long HX711_ADC::getSettlingTime()
 
 //overide the number of samples in use
 //value is rounded down to the nearest valid value
-void HX711_ADC::setSamplesInUse(int samples)
+void LoadCell::setSamplesInUse(int samples)
 {
 	int old_value = samplesInUse;
 	
@@ -496,19 +511,19 @@ void HX711_ADC::setSamplesInUse(int samples)
 }
 
 //returns the current number of samples in use.
-int HX711_ADC::getSamplesInUse()
+int LoadCell::getSamplesInUse()
 {
 	return samplesInUse;
 }
 
 //resets index for dataset
-void HX711_ADC::resetSamplesIndex()
+void LoadCell::resetSamplesIndex()
 {
 	readIndex = 0;
 }
 
 //Fill the whole dataset up with new conversions, i.e. after a reset/restart (this function is blocking once started)
-bool HX711_ADC::refreshDataSet()
+bool LoadCell::refreshDataSet()
 {
 	int s = getSamplesInUse() + IGN_HIGH_SAMPLE + IGN_LOW_SAMPLE; // get number of samples in dataset
 	resetSamplesIndex();
@@ -524,7 +539,7 @@ bool HX711_ADC::refreshDataSet()
 }
 
 //returns 'true' when the whole dataset has been filled up with conversions, i.e. after a reset/restart.
-bool HX711_ADC::getDataSetStatus()
+bool LoadCell::getDataSetStatus()
 {
 	bool i = false;
 	if (readIndex == samplesInUse + IGN_HIGH_SAMPLE + IGN_LOW_SAMPLE - 1) 
@@ -535,7 +550,7 @@ bool HX711_ADC::getDataSetStatus()
 }
 
 //returns and sets a new calibration value (calFactor) based on a known mass input
-float HX711_ADC::getNewCalibration(float known_mass)
+float LoadCell::getNewCalibration(float known_mass)
 {
 	float readValue = getData();
 	float exist_calFactor = getCalFactor();
@@ -546,13 +561,13 @@ float HX711_ADC::getNewCalibration(float known_mass)
 }
 
 //returns 'true' if it takes longer time then 'SIGNAL_TIMEOUT' for the dout pin to go low after a new conversion is started
-bool HX711_ADC::getSignalTimeoutFlag()
+bool LoadCell::getSignalTimeoutFlag()
 {
 	return signalTimeoutFlag;
 }
 
 //reverse the output value (flip positive/negative value)
 //tare/zero-offset must be re-set after calling this.
-void HX711_ADC::setReverseOutput() {
+void LoadCell::setReverseOutput() {
 	reverseVal = true;
 }

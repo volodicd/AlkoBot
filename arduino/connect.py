@@ -11,7 +11,7 @@ def main():
 
 def calibrate():
     print("All bottles must be empty")
-    ser.write("calibrate")
+
     results = ser.readline().decode('utf-8').rstrip()
     file_of_res = open("weight_data.txt", "w")
     for n, res in enumerate(results.split(" ")):
@@ -19,12 +19,23 @@ def calibrate():
     file_of_res.close()
 
 
-def drink(pump_nums, weights, passcode):
-    standart_weight = open("weight_data.txt", "r")
-    for pump_num, weight in pump_nums, weights:
-        ser.write(f"{pump_num}:{weight}")
+def drink(drink_id):
+    ser.write(b'a')
+    ser.write(int(drink_id[0]))
+    res = ser.readline ().decode ('utf-8').rstrip ()
+    print(res)
+    passcode = drink_id[2:]
+    for num in passcode.split("\t"):
+        ser.write(int(num[0]))
         res = ser.readline().decode('utf-8').rstrip()
+        print(res)
+        ser.write(int(str(num)[1:]))
+        out = ser.readline().decode('utf-8').rstrip()
+        print(out)
+
 
 
 if __name__ == '__main__':
+   # drink ("3\t0150\t2100\t3200")
+    ser.write(b"d")
     main()

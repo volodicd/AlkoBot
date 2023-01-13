@@ -9,6 +9,7 @@ class Drink(models.Model):
     photo = models.ImageField(upload_to='uploads/', null= True, height_field=400, width_field=400)
 
 class Order(models.Model):
-    drink = models.ForeignKey('Drink', null=False, verbose_name='Drink')
-    password = models.IntegerField(null= False, blank=False, default=4324, validators=Max)
+    title = models.CharField (max_length=50, db_index=True)
+    drink = models.ForeignKey('Drink', null=True, verbose_name='Drink', on_delete=models.SET_NULL)
+
 

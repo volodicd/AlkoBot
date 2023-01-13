@@ -46,11 +46,15 @@ Note: HX711_ADC configuration values has been moved to file config.h
 
 #define SIGNAL_TIMEOUT	100
 
-class HX711_ADC
-{	
+class LoadCell
+{
+
 		
 	public:
-		HX711_ADC(uint8_t dout, uint8_t sck); 		//constructor
+		LoadCell(uint8_t dout, uint8_t sck);
+        LoadCell();//constructor
+        LoadCell(const LoadCell &drob);
+        void setPins(uint8_t dout, uint8_t sck);
 		void setGain(uint8_t gain = 128); 			//value must be 32, 64 or 128*
 		void begin();								//set pinMode, HX711 gain and power up the HX711
 		void begin(uint8_t gain);					//set pinMode, HX711 selected gain and power up the HX711
@@ -87,7 +91,7 @@ class HX711_ADC
 		bool getSignalTimeoutFlag();				//returns 'true' if it takes longer time then 'SIGNAL_TIMEOUT' for the dout pin to go low after a new conversion is started
 		void setReverseOutput();					//reverse the output value
 
-	protected:
+private:
 		void conversion24bit(); 					//if conversion is ready: returns 24 bit data and starts the next conversion
 		long smoothedData();						//returns the smoothed data value calculated from the dataset
 		uint8_t sckPin; 							//HX711 pd_sck pin
